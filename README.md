@@ -5,6 +5,11 @@ This is an experimental project, not a serious one.
 ## Backend
 Backend will be written in javascript with express.js
 
+### Routes
+- GET '/' -> Connection control
+- POST '/signup' -> signup to sqlite database
+- POST '/addcash' -> Will add money at given amount to an account if credentials are correct.
+
 ## Frontend
 Frontend will be written in javascript with electron.js
 
