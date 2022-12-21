@@ -9,6 +9,9 @@ Backend will be written in javascript with express.js
 - GET '/' -> Connection control
 - POST '/signup' -> signup to sqlite database
 - POST '/addcash' -> Will add money at given amount to an account if credentials are correct.
+- GET '/products' -> get list of products.
+- POST (Admin only) '/addproduct' -> Adds product to products database.
+- POST '/buyproduct' -> Buy product.
 
 ## Frontend
 Frontend will be written in javascript with electron.js
