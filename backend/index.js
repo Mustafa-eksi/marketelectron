@@ -56,6 +56,78 @@ function GetProduct(name) {
     })
 }
 
+function StorePurchase(username, productname, sum, number) { // ATTENTION!! This function doesn't control if user is authenticated or not
+    return new Promise((res, rej)=>{
+        if(!username || !sum || !productname || !number){
+            rej("Arguments are not valid.");
+            return;
+        }
+        db.run("insert into purchases (product_name,purchaser_name,purchase_sum,purchase_number,purchase_ts) values (?,?,?,?,?)", [productname,username,sum, number,Date.now()], (err)=>{
+            if(err) {
+                rej(err.message);
+                return;
+            }
+        });
+        res();
+    })
+}
+
+function BuyProduct(username, password, productname, number) {
+    return new Promise((res, rej)=>{
+        if(!username || !password || !productname || !number){
+            rej("Arguments are not valid.");
+            return;
+        }
+        Authenticate(username, password).then((v)=> {
+            if(!v) {
+                rej("Authentication is unsuccessful!")
+                return;
+            }
+            db.all("select cash from accounts where username=?", [username], (err,rows)=>{
+                if(err) {
+                    rej("Can not access account right now!");
+                    return console.error(err);
+                }
+                GetProduct(productname).then((pro)=>{
+                    if(!(rows[0]["cash"] >= pro.price && pro.stock >= number)) {
+                        rej("insufficient balance")
+                        return;
+                    }
+                    db.run("update accounts set cash=cash-? where username=?", [pro.price, username], (err)=>{
+                        if(err) {
+                            rej("Can not update cash! " + err.message);
+                            return;
+                        }
+                    });
+                    let prebought = pro.bought_by ? pro.bought_by + "," : "";
+                    db.run("update products set bought_by = ?, last_bought_ts = ?, stock=stock-? where name=?", [prebought+username, Date.now(), number, productname], (err)=>{
+                        if(err) {
+                            rej("Can not update product! " + err.message);
+                            return;
+                        }
+                    });
+                    StorePurchase(username, productname, pro.price * number, number).then(()=>{
+                        res("Successfully bought!");
+                    }).catch((err)=>{
+                        if(err) {
+                            rej("Can not store purchase data! " + err);
+                            return;
+                        }
+                    });
+                }).catch((err)=>{
+                    rej("Can not get product! " + err)
+                    return console.error(err);
+                })
+                
+            })
+            
+        }).catch((err)=>{
+            rej("Cannot authenticate!")
+            return console.error(err);
+        });
+    });
+}
+
 app.get('/', (req, res)=>{ // Connection test
     res.send("OK")
 })
@@ -163,56 +235,15 @@ app.get('/products', (req, res)=>{
 })
 
 app.post('/buyproduct', (req, res)=>{ // req.body = {username, password, name (product name), number}
-    if(!req.body.username || !req.body.password || !req.body.name || !req.body.number){
-        res.status(400);
-        res.send("Username, password and amount must be provided!");
-    }else {
-        Authenticate(req.body.username, req.body.password).then((v)=> {
-            if(v) {
-                db.all("select cash from accounts where username=?", [req.body.username], (err,rows)=>{
-                    if(err) {
-                        res.status(500);
-                        res.send("Can not access account right now!");
-                        return console.error(err);
-                    }else {
-                        GetProduct(req.body.name).then((pro)=>{
-                            if(rows[0]["cash"] >= pro.price && pro.stock >= req.body.number) {
-                                db.run("update accounts set cash=cash-? where username=?", [pro.price, req.body.username], (err)=>{
-                                    if(err) {
-                                        res.status(500)
-                                        res.send("Can not update cash! " + err.message);
-                                    }
-                                });
-                                let prebought = pro.bought_by ? pro.bought_by + "," : "";
-                                db.run("update products set bought_by = ? and last_bought_ts = ?  and stock=stock-? where name=?", [prebought+req.body.username, Date.now(), req.body.number, req.body.username], (err)=>{
-                                    if(err) {
-                                        res.status(500)
-                                        res.send("Can not update product! " + err.message);
-                                    }
-                                });
-                                res.status(200);
-                                res.send("Successfully bought!");
-                            }else {
-                                res.status(200)
-                                res.send("insufficient balance")
-                            }
-                        }).catch((err)=>{
-                            res.status(500)
-                            res.send("Can not get product! " + err)
-                            return console.error(err);
-                        })
-                    }
-                })
-            }else {
-                res.status(400)
-                res.send("Authentication is unsuccessful!")
-            }
-        }).catch((err)=>{
-            res.status(500);
-            res.send("Can not authenticate: " + err);
-            return console.error(err);
-        });
-    }
+    BuyProduct(req.body.username, req.body.password, req.body.name, req.body.number).then((v)=>{
+        res.status(200);
+        res.send(v);
+    }).catch((err)=>{
+        if(err) {
+            res.status(400);
+            res.send(err);
+        }
+    })
 })
 
 app.listen(port, () => {

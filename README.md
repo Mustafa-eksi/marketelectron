@@ -13,6 +13,11 @@ Backend will be written in javascript with express.js
 - POST (Admin only) '/addproduct' -> Adds product to products database.
 - POST '/buyproduct' -> Buy product.
 
+### Databases
+- Accounts
+- Products
+- Purchases
+
 ## Frontend
 Frontend will be written in javascript with electron.js
 
