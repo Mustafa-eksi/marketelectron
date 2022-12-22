@@ -12,6 +12,7 @@ Backend will be written in javascript with express.js
 - GET '/products' -> get list of products.
 - POST (Admin only) '/addproduct' -> Adds product to products database.
 - POST '/buyproduct' -> Buy product.
+- POST (Admin only) '/changeprice' -> Change the price of a product
 
 ### Databases
 - Accounts
@@ -22,9 +23,9 @@ Backend will be written in javascript with express.js
 Frontend will be written in javascript with electron.js
 
 # Features
-- [ ] Accounts (Account information stored in backend database)
+- [x] Accounts (Account information stored in backend database)
 - [ ] Add (or remove) goods to basket
 - [ ] pay for basket
-- [ ] Goods' stocks
+- [x] Goods' stocks
 - [ ] Goods' price history
 - [ ] ...

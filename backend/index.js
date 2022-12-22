@@ -45,6 +45,32 @@ function IsAdmin(username) {
     })
 }
 
+function AuthenticateAsAdmin(username, password) {
+    return new Promise((res, rej)=>{
+        Authenticate(username, password).then((v)=>{
+            if(!v) {
+                rej("Authentication is unsuccessful");
+                return;
+            }
+            IsAdmin(username).then((v)=>{
+                if(!v) {
+                    rej("User is not an admin")
+                    return;
+                }
+                res();
+            }).catch((err)=>{
+                if(err){
+                    rej(err);
+                }
+            })
+        }).catch((err)=>{
+            if(err) {
+                rej(err);
+            }
+        })
+    })
+}
+
 function GetProduct(name) {
     return new Promise((res, rej)=>{
         db.all("select * from products where name=?", [name], (err, rows)=>{
@@ -195,29 +221,23 @@ app.post('/addproduct', (req, res)=>{ // req.body = {username, password, name (p
         res.status(400);
         res.send("Username, password and amount must be provided!");
     }else {
-        Authenticate(req.body.username, req.body.password).then((v)=> {
-            if(v) {
-                IsAdmin(req.body.username).then((v)=>{
-                    if(v) {
-                        db.run("insert into products (name,stock,price) values (?,?,?)", [req.body.name, req.body.stock, req.body.price], (err)=>{
-                            if(err){
-                                res.status(500);
-                                res.send("Can not create product!");
-                                return console.error(err.message);
-                            }
-                        })
-                        res.status(200)
-                        res.send("Product successfully created!");
-                    }else {
-                        res.status(400)
-                        res.send("Your account is not admin!")
-                    }
-                }).catch((err)=>console.error(err));
-            }else {
-                res.status(400)
-                res.send("Authentication is unsuccessful!")
+        AuthenticateAsAdmin(req.body.username, req.body.password).then(()=>{
+            db.run("insert into products (name,stock,price) values (?,?,?)", [req.body.name, req.body.stock, req.body.price], (err)=>{
+                if(err){
+                    res.status(500);
+                    res.send("Can not create product! " + err.message);
+                    return console.error(err.message);
+                }else {
+                    res.status(200)
+                    res.send("Product successfully created!");
+                }
+            })
+        }).catch((err)=>{
+            if(err) {
+                res.status(400);
+                res.send("Authentication is unsuccessful! " + err);
             }
-        }).catch((err)=>console.error(err));
+        })
     }
 })
 
@@ -242,6 +262,30 @@ app.post('/buyproduct', (req, res)=>{ // req.body = {username, password, name (p
         if(err) {
             res.status(400);
             res.send(err);
+        }
+    })
+})
+
+app.post('/changeprice', (req, res)=>{ // req.body = {username, password, productname, newprice}
+    if(!req.body.username || !req.body.password || !req.body.productname || !req.body.newprice || req.body.newprice < 0) {
+        res.status(400);
+        res.send("Invalid arguments!");
+        return;
+    }
+    AuthenticateAsAdmin(req.body.username, req.body.password).then(()=>{
+        db.run("update products set price=? where name=?", [req.body.newprice, req.body.productname], (err)=>{
+            if(err) {
+                res.status(500);
+                res.send("Can not update products price! " + err.message);
+                return;
+            }
+            res.status(200);
+            res.send("Successfully changed price!")
+        })
+    }).catch((err)=>{
+        if(err){
+            res.status(400);
+            res.send("Can not change price! " + err);
         }
     })
 })
