@@ -1,0 +1,15 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "Frontend for the market application",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "Mustafa Ekşi",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "electron": "^22.0.0",
+    "electron-fetch": "^1.9.1"
+  }
+}

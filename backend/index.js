@@ -8,7 +8,7 @@ const db = new sql.Database("./market.db", sql.OPEN_READWRITE, (err)=>{
 
 app.use(express.json());
 
-function IsUsernameUnique(username) { // returns a number
+function IsUsernameUnique(username) { // returns a boolean
     return new Promise((res, rej) => {
         db.all("select count(username) from accounts where username=?", [username], (err, rows)=>{
             if(err) return rej(err.message);
