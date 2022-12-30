@@ -187,6 +187,22 @@ app.post('/signup', (req, res)=>{ // req.body = {username: "XXX", password: "XXX
     }
 })
 
+app.post('/signin', (req, res)=>{
+    if(!req.body.username || !req.body.password){
+        res.status(400);
+        res.send("Username and password must be provided!");
+    }else {
+        Authenticate(req.body.username, req.body.password).then((v)=>{
+            res(v);            
+        }).catch((err)=>{
+            if(err) {
+                res(err);
+                return;
+            }
+        })
+    }
+})
+
 app.post('/addcash', (req, res)=> {
     if(!req.body.username || !req.body.password || !req.body.amount){
         res.status(400);
