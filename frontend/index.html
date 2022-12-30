@@ -10,6 +10,9 @@
             position: absolute;
             left: -9999px;
         }
+        .card {
+            flex-direction: row;
+        }
     </style>
     <title>Market</title>
 </head>
@@ -43,8 +46,9 @@
         </div>
     </nav>
     <div id="products">
-        <div class="invisible" id="invprod">
-            <span id="product_name">a</span>
+        <div class="card invisible" id="invprod">
+            <div class="card-body" id="product_name">a</div>
+            <button class="btn btn-primary" id="satinal">Buy</button>
         </div>
     </div>
     <script>
@@ -54,8 +58,11 @@
         ipcRenderer.invoke('get-products').then((v)=>{
             for(let i = 0; i < v.length; i++) {
                 var a = invprod.cloneNode(true);
-                a.className = "";
-                a.childNodes[1].textContent = v[i].name;
+                a.className = "card";
+                a.children[0].textContent = v[i].name;
+                a.children[1].addEventListener('click',()=>{
+                    
+                })
                 products.appendChild(a);
             }
         })
